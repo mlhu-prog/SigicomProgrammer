@@ -161,7 +161,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     
     drive = "O:"
-    splash_file = os.path.join("A000000", "A004371", "3_Pdoc", "Python","Kalibrering","splash_screen.png")
+    splash_file = os.path.join("A000000", "A004371", "3_Pdoc", "Python","Kalibrering","files","splash_screen.png")
     splash_file = os.path.normpath(drive + os.sep + splash_file)
 
     if not os.path.exists(splash_file):
