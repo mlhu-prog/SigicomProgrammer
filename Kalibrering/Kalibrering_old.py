@@ -26,74 +26,12 @@ ownership_path = os.path.normpath(drive + os.sep + ownership_path)
 logo_width = 4 * cm  # Width of the logo
 logo_height = 1.5 * cm  # Height of the logo
 
-def save_json(data, file_path):
-    with open(file_path, 'w') as file:
-        json.dump(data, file, indent=4)
-
-def load_json(file_path):
-    if os.path.exists(file_path):
-        with open(file_path, 'r') as file:
-            return json.load(file)
-    return {}
 
 def load_ownership_data(file_path):
     import pandas as pd
     df = pd.read_excel(file_path, sheet_name="Sheet1")  # Change "Sheet1" if necessary
     ownership_dict = df.set_index("ID")["Ejer"].to_dict()  # Assuming Excel columns are "ID" and "Owner"
     return ownership_dict
-
-def fetch_sensor_info(sensor_ids, base_url, auth, years):
-    import requests, time
-    from datetime import datetime, timedelta
-    today = datetime.today()
-    sensor_info = {}
-
-
-    dir_name = f"{today.day}_{today.month}_{today.year}"
-    if not os.path.exists(dir_name):
-        os.mkdir(dir_name)
-        
-    filename = f"sensor_info.json"
-
-    file_out = os.path.join(dir_name, filename)
-
-
-    for idx, sensor_id in enumerate(sensor_ids):
-        print(f"{idx+1}:{len(sensor_ids)}")
-        url = f"{base_url}/{sensor_id}"
-        response = requests.get(url=url, auth=auth, headers={'accept': 'application/json'})
-        
-        # Retry logic
-        wait_time = 0
-        while response.status_code != 200:
-            print(f"Waiting time: {wait_time + 5}")
-            time.sleep(5)
-            wait_time += 5
-            response = requests.get(url=url, auth=auth, headers={'accept': 'application/json'})
-        
-        data_temp = response.json()
-        
-        last_time_read = data_temp.get("timestamp_last_read",1)
-        last_time_read = datetime.fromtimestamp(last_time_read).strftime("%Y-%m-%d %H:%M")
-        
-        cali_date_str = data_temp.get("calibration_date", "ukendt")
-
-        if cali_date_str == None:
-            cali_date_str = "ukendt"
-        
-        try:
-            cali_date = datetime.strptime(cali_date_str, "%Y-%m-%d")
-
-            cali_status = "OK" if today - cali_date < timedelta(days=365*years) else "IKKE OK"
-        except:
-            cali_status = "Ukendt"
-
-        sensor_info[sensor_id] = {"Type": data_temp.get("type", "ukendt"), "Status": data_temp.get("state","ukendt"), "Sidste data hentet": last_time_read, 
-                                "Kalibreringsdato": cali_date_str, "Kalibreringsstatus": cali_status}
-    
-    save_json(sensor_info, file_out)
-    
-    return sensor_info, dir_name
 
 def combine_data_with_ownership(sensor_info, ownership_dict):
 
